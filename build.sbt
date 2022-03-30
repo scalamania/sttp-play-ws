@@ -24,7 +24,7 @@ lazy val root: Project = (project in file("."))
 
 val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
   List(
-    organization := "com.github.scalamania",
+    organization := "io.github.scalamania",
     scalaVersion := "2.12.11",
     organizationName := "scalamania",
     licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
