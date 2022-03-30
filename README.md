@@ -1,7 +1,5 @@
 ## sttp-play-ws ##
 
-[![Build Status](https://travis-ci.org/ragb/sttp-play-ws.svg?branch=master)](https://travis-ci.org/ragb/sttp-play-ws)
-
 [sttp][sttp] backend for [play-ws][playws].
 
 ### Goals ###
@@ -14,18 +12,17 @@ If you develop HTTP clients with sttp to be used, e.g. on an Akka based micro Se
  
 Include the following on your build.sbt or similar:
  
- 
+
 ```scala
-libraryDependencies += "com.ruiandrebatista" %% "sttp-play-ws-<playVersion>" % "<latest>"
+libraryDependencies += "io.github.scalamania" %% "sttp-play-ws-<playVersion>" % "<latest>"
 ```
 
-This library is published for both play 2.6 and 2.7, and scala 2.11 and 2.12.
+This library is published for both play 2.3, and scala 2.12 and 2.13.
 Check the following table for artifact names, versions and associated play versions you might use for the artifact name.
 
-| Artifact Name   | Play Version | Latest Version                                                                                                                                                                                                     |
-|-----------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sttp-play-ws-26 | 2.6.23       | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.ruiandrebatista/sttp-play-ws-26_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.ruiandrebatista/sttp-play-ws-26_2.12) |
-| sttp-play-ws-27 | 2.7.2        |                                                                                                                                                                                                                    [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.ruiandrebatista/sttp-play-ws-27_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.ruiandrebatista/sttp-play-ws-27_2.12)|
+| Artifact Name   | Play Version |
+|-----------------|--------------|
+| sttp-play-ws-28 | 2.8.14       |
 
 ### Features ###
 

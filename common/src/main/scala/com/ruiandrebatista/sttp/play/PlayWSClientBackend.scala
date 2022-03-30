@@ -17,23 +17,18 @@
 package com.ruiandrebatista.sttp.play
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.{FileIO, Source, Sink}
-
-import akka.stream.scaladsl.StreamConverters
+import akka.stream.scaladsl.{FileIO, Sink, Source, StreamConverters}
 import akka.util.ByteString
 import java.io.File
-
-import sttp.client._
-import sttp.model._
-import sttp.client.monad._
-import sttp.client.ws.WebSocketResponse
-
-import play.api.mvc.MultipartFormData
-import play.core.formatters.{Multipart => PlayMultipart}
 import play.api.libs.ws._
 import play.api.libs.ws.ahc.AhcWSClient
-
+import play.api.mvc.MultipartFormData
+import play.core.formatters.{Multipart => PlayMultipart}
 import scala.concurrent.{ExecutionContext, Future}
+import sttp.capabilities.Effect
+import sttp.client3._
+import sttp.model._
+import sttp.monad.{FutureMonad, MonadError}
 
 final class PlayWSClientBackend private (
     wsClient: WSClient,
@@ -42,73 +37,73 @@ final class PlayWSClientBackend private (
 )(implicit
     ec: ExecutionContext,
     mat: Materializer
-) extends SttpBackend[Future, Source[ByteString, Any], NothingT] {
+) extends SttpBackend[Future, Source[ByteString, Any]] {
 
   private val maybeProxyServer = backendOptions.proxy.map { sttpProxy =>
     DefaultWSProxyServer(sttpProxy.host, sttpProxy.port, if (sttpProxy.port == 443) Some("https") else None)
   }
 
-  private type S = Source[ByteString, Any]
+  private type S = Source[ByteString, Any] with Effect[Future]
 
   private def convertRequest[T](request: Request[T, S]): WSRequest = {
-    val holder = wsClient.url(request.uri.toJavaUri.toASCIIString())
+    val holder = wsClient.url(request.uri.toJavaUri.toASCIIString)
 
     val holderWithProxy =
-      maybeProxyServer.fold(holder)(holder.withProxyServer _)
+      maybeProxyServer.fold(holder)(holder.withProxyServer)
 
-    val (maybeBody, maybeContentType) = requestBodyToWsBodyAndContentType(request.body)
-
-    val contentType: String = request.headers
+    val maybeInputContentType = request.headers
       .collectFirst {
         case h if h.name == HeaderNames.ContentType => h.value
       }
-      .orElse(maybeContentType)
-      .getOrElse(MediaType.ApplicationOctetStream.toString())
 
-    // Compute our own BodyWritable, essentially bypassing
-    // play BodyWritable infrastructure
+    val (maybeBody, maybeContentType) = requestBodyToWsBodyAndContentType(request.body, maybeInputContentType)
+    val contentType: String = maybeContentType.getOrElse(MediaType.ApplicationOctetStream.toString())
+
     val w: BodyWritable[WSBody] = BodyWritable(identity, contentType)
 
     maybeBody
       .fold(holderWithProxy)(b => holderWithProxy.withBody(b)(w))
-      .withFollowRedirects(false) // Wraper backend will handle this
+      .withFollowRedirects(false) // Wrapper backend will handle this
       .withHttpHeaders(request.headers.map(h => (h.name, h.value)): _*)
       .withMethod(request.method.method)
       .withRequestTimeout(request.options.readTimeout)
-
   }
 
-  private def requestBodyToWsBodyAndContentType[T](requestBody: RequestBody[S]): (Option[WSBody], Option[String]) = {
+  private def requestBodyToWsBodyAndContentType[T](
+      requestBody: RequestBody[S],
+      maybeContentType: Option[String]
+  ): (Option[WSBody], Option[String]) = {
+    def contentType(ct: String): String = maybeContentType.getOrElse(ct)
 
     requestBody match {
       case StringBody(s, encoding, ct) =>
-        (Some(InMemoryBody(ByteString(s, encoding))), ct.map(_.toString()))
+        (Some(InMemoryBody(ByteString(s, encoding))), Some(contentType(ct.toString())))
       case ByteArrayBody(a, ct) =>
-        (Some(InMemoryBody(ByteString(a))), ct.map(_.toString()))
+        (Some(InMemoryBody(ByteString(a))), Some(contentType(ct.toString())))
       case ByteBufferBody(b, ct) =>
-        (Some(InMemoryBody(ByteString(b))), ct.map(_.toString()))
+        (Some(InMemoryBody(ByteString(b))), Some(contentType(ct.toString())))
       case InputStreamBody(in, ct) =>
-        (Some(SourceBody(StreamConverters.fromInputStream(() => in))), ct.map(_.toString()))
-      case StreamBody(s: S) =>
-        (Some(SourceBody(s)), None)
+        (Some(SourceBody(StreamConverters.fromInputStream(() => in))), Some(contentType(ct.toString())))
+      case StreamBody(s) =>
+        (Some(SourceBody(s.asInstanceOf[S])), None)
       case NoBody =>
         (None, None)
       case FileBody(file, ct) =>
-        (Some(SourceBody(FileIO.fromPath(file.toPath))), ct.map(_.toString()))
+        (Some(SourceBody(FileIO.fromPath(file.toPath))), Some(contentType(ct.toString())))
       case MultipartBody(parts) =>
+        val contentType = maybeContentType.getOrElse("multipart/form-data")
         val boundary = PlayMultipart.randomBoundary()
-        val contentType = s"multipart/form-data; boundary=$boundary"
-        val playParts = Source(parts.map(toPlayMultipart _))
-        (Some(SourceBody(PlayMultipart.transform(playParts, boundary))), Some(contentType))
+        val finalContentType = s"$contentType; boundary=$boundary"
+        val playParts = Source(parts.map(toPlayMultipart))
+        (Some(SourceBody(PlayMultipart.transform(playParts, boundary))), Some(finalContentType))
     }
   }
 
-  private def toPlayMultipart(part: Part[BasicRequestBody]) = {
-
+  private def toPlayMultipart(part: Part[RequestBody[S]]) = {
     def byteStringPart(bstr: ByteString, ct: Option[String]) =
       byteSourcePart(Source.single(bstr), ct)
 
-    def byteSourcePart(source: Source[ByteString, _], ct: Option[String]) = {
+    def byteSourcePart(source: Source[ByteString, Any], ct: Option[String]) = {
       MultipartFormData.FilePart(part.name, part.fileName.getOrElse(""), part.contentType orElse ct, source)
     }
 
@@ -118,50 +113,55 @@ final class PlayWSClientBackend private (
       }
 
     part.body match {
+      case MultipartBody(_) | NoBody | StreamBody(_) =>
+        ???
       case StringBody(s, _, _) =>
         MultipartFormData.DataPart(nameWithFilename, s)
-
       case ByteArrayBody(a, ct) =>
-        byteStringPart(ByteString(a), ct.map(_.toString()))
+        byteStringPart(ByteString(a), Some(ct.toString()))
       case ByteBufferBody(b, ct) =>
-        byteStringPart(ByteString(b), ct.map(_.toString()))
+        byteStringPart(ByteString(b), Some(ct.toString()))
       case InputStreamBody(in, ct) =>
-        byteSourcePart(StreamConverters.fromInputStream(() => in), ct.map(_.toString()))
+        byteSourcePart(StreamConverters.fromInputStream(() => in), Some(ct.toString()))
       case FileBody(file, ct) =>
         MultipartFormData.FilePart(
           part.name,
           part.fileName.getOrElse(file.name),
-          part.contentType orElse ct.map(_.toString()),
+          part.contentType orElse Some(ct.toString()),
           FileIO.fromPath(file.toPath)
         )
     }
   }
 
-  def send[T](r: Request[T, S]): Future[Response[T]] = {
-    val request = convertRequest(r)
+  def send[T, R >: S](r: Request[T, R]): Future[Response[T]] =
+    adjustExceptions(r) {
+      val request = convertRequest(r)
 
-    val execute = r.response match {
-      case ResponseAsStream() => request.stream _
-      case _                  => request.execute _
+      val execute =
+        r.response match {
+          case ResponseAsStream(_, _) => request.stream _
+          case _                      => request.execute _
+        }
+
+      execute().flatMap(readResponse(_, r.response))
     }
 
-    execute()
-      .flatMap(readResponse(_, r.response))
-  }
-
   private def readResponse[T](response: WSResponse, responseAs: ResponseAs[T, S]) = {
-
     val headers = response.headers.toList.flatMap {
       case (name, values) => values.map(v => Header.unsafeApply(name, v))
     }
 
     val metadata =
-      ResponseMetadata(headers, StatusCode.unsafeApply(response.status), response.statusText)
+      ResponseMetadata(
+        _headers = headers,
+        statusCode = StatusCode.unsafeApply(response.status),
+        _statusText = response.statusText
+      )
 
     val body =
       readBody(response, metadata, responseAs)
 
-    body.map(b => Response(b, metadata.code, metadata.statusText, metadata.headers, Nil))
+    body.map(b => Response(b, metadata.code, metadata.statusText, metadata.headers))
   }
 
   private def readBody[T](
@@ -170,28 +170,33 @@ final class PlayWSClientBackend private (
       responseAs: ResponseAs[T, S]
   ): Future[T] =
     responseAs match {
-      case MappedResponseAs(raw, g) =>
-        readBody(response, metadata, raw)
-          .map(r => g(r, metadata))
-
-      case ResponseAsFromMetadata(f) => readBody(response, metadata, f(metadata))
-      case ResponseAsByteArray       => Future { response.bodyAsBytes.toArray }
-      case r @ ResponseAsStream() =>
-        Future.successful(r.responseIsStream(response.bodyAsSource))
+      case MappedResponseAs(raw, g, _) =>
+        readBody(response, metadata, raw).map(r => g(r, metadata))
+      case r @ ResponseAsFromMetadata(_, _) =>
+        readBody(response, metadata, r(metadata))
+      case ResponseAsByteArray =>
+        Future { response.bodyAsBytes.toArray }
+      case ResponseAsStream(s, f) =>
+        f.asInstanceOf[(Any, ResponseMetadata) => Future[T]](s, metadata)
+      case r: ResponseAsStreamUnsafe[_, S] =>
+        Future { r.s.asInstanceOf[T] }
       case ResponseAsFile(file) =>
         saveFile(file.toFile, response).map(_ => file)
+      case ResponseAsBoth(l, r) =>
+        readBody(response, metadata, l.asInstanceOf[ResponseAs[T, S]]).flatMap { lResult =>
+          readBody(response, metadata, r).map { rResult =>
+            (lResult, Some(rResult))
+          }
+        }
       case IgnoreResponse =>
         response.bodyAsSource.runWith(Sink.ignore).map(_ => ())
-
     }
 
   def close(): Future[Unit] =
-    if (mustCloseClient)
-      Future(wsClient.close())
+    if (mustCloseClient) Future(wsClient.close())
     else Future.successful(())
 
   private def saveFile(file: File, response: StandaloneWSResponse) = {
-
     if (!file.exists()) {
       file.getParentFile.mkdirs()
       file.createNewFile()
@@ -202,23 +207,33 @@ final class PlayWSClientBackend private (
 
   override val responseMonad: MonadError[Future] = new FutureMonad
 
-  override def openWebsocket[T, WS_RESULT](
-      request: Request[T, Source[ByteString, Any]],
-      handler: NothingT[WS_RESULT]
-  ): Future[WebSocketResponse[WS_RESULT]] = ???
+  private def adjustExceptions[T](request: Request[_, _])(t: => Future[T]): Future[T] =
+    SttpClientException.adjustExceptions(responseMonad)(t)(exception(request, _))
 
+  private def exception(request: Request[_, _], e: Exception): Option[Exception] =
+    e match {
+      case e: akka.stream.ConnectionException => Some(new SttpClientException.ConnectException(request, e))
+      case e: akka.stream.StreamTcpException =>
+        e.getCause match {
+          case ee: Exception =>
+            exception(request, ee).orElse(Some(new SttpClientException.ReadException(request, e)))
+          case _ => Some(new SttpClientException.ReadException(request, e))
+        }
+      case e: akka.stream.scaladsl.TcpIdleTimeoutException => Some(new SttpClientException.ReadException(request, e))
+      case e: Exception                                    => SttpClientException.defaultExceptionToSttpClientException(request, e)
+    }
 }
 
 object PlayWSClientBackend {
   private def defaultClient(implicit mat: Materializer) =
     AhcWSClient()
   def apply(backendOptions: SttpBackendOptions)(implicit ec: ExecutionContext, mat: Materializer) =
-    new FollowRedirectsBackend[Future, Source[ByteString, Any], NothingT](
+    new FollowRedirectsBackend[Future, Source[ByteString, Any]](
       new PlayWSClientBackend(defaultClient, true, backendOptions)
     )
 
   def apply(client: WSClient, backendOptions: SttpBackendOptions)(implicit ec: ExecutionContext, mat: Materializer) =
-    new FollowRedirectsBackend[Future, Source[ByteString, Any], NothingT](
+    new FollowRedirectsBackend[Future, Source[ByteString, Any]](
       new PlayWSClientBackend(client, false, backendOptions)
     )
 }

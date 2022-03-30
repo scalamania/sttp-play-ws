@@ -1,3 +1,17 @@
+import sbt.Keys.scalacOptions
+
+val defaultCompilerOptions = Seq(
+  "-deprecation",
+  "-explaintypes",
+  "-feature",
+  "-language:higherKinds",
+  "-unchecked",
+  "-Xfatal-warnings",
+  "-Ywarn-extra-implicit",
+  "-Yrangepos",
+  "-Xlint:unused"
+)
+
 lazy val root: Project = (project in file("."))
   .settings(
     publishArtifact := false,
@@ -5,27 +19,16 @@ lazy val root: Project = (project in file("."))
     publish := {}
   )
   .aggregate(
-    play26Project,
-    play27Project,
     play28Project
   )
 
 val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
   List(
-    organization := "com.ruiandrebatista",
+    organization := "io.github.scalamania",
     scalaVersion := "2.12.11",
-    organizationName := "Rui Batista",
-    startYear := Some(2018),
+    organizationName := "scalamania",
     licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
-    homepage := Some(url("https://github.com/ragb/sttp-play-ws")),
-    developers := List(
-      Developer(
-        "ragb",
-        "Rui Batista",
-        "ruiandrebatista@gmail.com",
-        url("http://www.ruiandrebatista.com")
-      )
-    )
+    homepage := Some(url("https://github.com/scalamania/sttp-play-ws"))
   )
 ) ++ Seq(
   scalaSource in Compile := (LocalProject("root") / baseDirectory).value / "common" / "src" / "main" / "scala",
@@ -35,45 +38,24 @@ val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
   ),
   fork in Test := true,
   libraryDependencies ++= Seq(
-    "com.softwaremill.sttp.client" %% "core" % "2.0.0-RC2",
-    ("com.softwaremill.sttp.client" %% "core" % "2.0.0-RC2" classifier "tests") % Test,
-    "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-    "com.typesafe.akka" %% "akka-http" % "10.1.8" % Test,
-    "com.typesafe.akka" %% "akka-stream" % "2.5.31" % Test,
-    "ch.megard" %% "akka-http-cors" % "0.4.2" % Test,
+    "com.softwaremill.sttp.client3" %% "core" % "3.5.1",
+    ("com.softwaremill.sttp.client3" %% "core" % "3.5.1" classifier "tests") % Test,
+    "org.scalatest" %% "scalatest" % "3.2.11" % Test,
+    "com.typesafe.akka" %% "akka-http" % "10.2.9" % Test,
+    "com.typesafe.akka" %% "akka-stream" % "2.6.19" % Test,
+    "ch.megard" %% "akka-http-cors" % "1.1.3" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   )
 )
 
-lazy val play26Project = Project("play26", file("play26"))
-  .settings(commonSettings)
-  .settings(
-    name := "sttp-play-ws-26",
-    crossScalaVersions := Seq("2.11.12", "2.12.11"),
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-ws" % "2.6.23",
-      "com.typesafe.play" %% "play-ahc-ws" % "2.6.23"
-    )
-  )
-
-lazy val play27Project = Project("play27", file("play27"))
-  .settings(commonSettings)
-  .settings(
-    name := "sttp-play-ws-27",
-    crossScalaVersions := Seq("2.11.12", "2.12.11", "2.13.2"),
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-ws" % "2.7.5",
-      "com.typesafe.play" %% "play-ahc-ws" % "2.7.5"
-    )
-  )
-
 lazy val play28Project = Project("play28", file("play28"))
   .settings(commonSettings)
   .settings(
-    name := "sttp-play-ws-28",
-    crossScalaVersions := Seq("2.12.10", "2.13.2"),
+    name := "sttp-play-ws",
+    crossScalaVersions := Seq("2.12.15", "2.13.8"),
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-ws" % "2.8.2",
-      "com.typesafe.play" %% "play-ahc-ws" % "2.8.2"
-    )
+      "com.typesafe.play" %% "play-ws" % "2.8.14" % Provided,
+      "com.typesafe.play" %% "play-ahc-ws" % "2.8.14" % Provided
+    ),
+    scalacOptions := defaultCompilerOptions
   )
