@@ -17,6 +17,7 @@ lazy val root: Project = (project in file("."))
     publishArtifact := false,
     publishLocal := {},
     publish := {},
+    publishTo := sonatypePublishToBundle.value,
     sonatypeCredentialHost := "s01.oss.sonatype.org",
     sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
   )
