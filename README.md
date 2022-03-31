@@ -1,6 +1,6 @@
 ## sttp-play-ws ##
 
-[![Build Status](https://travis-ci.org/scalamania/sttp-play-ws.svg?branch=master)](https://travis-ci.org/scalamania/sttp-play-ws)
+![Build status](https://github.com/scalamania/sttp-play-ws/actions/workflows/publish.yml/badge.svg)
 
 [sttp][sttp] backend for [play-ws][playws].
 
