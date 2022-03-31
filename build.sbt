@@ -18,6 +18,7 @@ lazy val root: Project = (project in file("."))
     publishLocal := {},
     publish := {},
     publishTo := sonatypePublishToBundle.value,
+    publishMavenStyle := true,
     sonatypeCredentialHost := "s01.oss.sonatype.org",
     sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
   )
