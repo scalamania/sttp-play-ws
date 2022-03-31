@@ -16,7 +16,9 @@ lazy val root: Project = (project in file("."))
   .settings(
     publishArtifact := false,
     publishLocal := {},
-    publish := {}
+    publish := {},
+    sonatypeCredentialHost := "s01.oss.sonatype.org",
+    sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
   )
   .aggregate(
     play28Project
