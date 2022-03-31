@@ -19,7 +19,8 @@ Include the following on your build.sbt or similar:
 libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "<latest>"
 ```
 
-This library is published for play 2.8, and scala 2.12 & 2.13.
+This library is published using play 2.8 as a `Provided` dependency, which means does not include play itself and allows upgrades on non-broken changes.
+(published for both 2.12 and 2.13)
 
 For play 2.6, 2.7 use [legacy-play-ws][legacy-play-ws]
 
