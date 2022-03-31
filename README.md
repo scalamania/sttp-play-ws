@@ -21,6 +21,8 @@ libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "<latest>"
 
 This library is published for play 2.8, and scala 2.12 & 2.13.
 
+For play 2.6, 2.7 use [legacy-play-ws][legacy-play-ws]
+
 ### Features ###
 
 Supports all *tested* features of sttp backends. Uses sttp own tests(pooled automatically) for unit testing of this backend.
@@ -50,4 +52,5 @@ When this gets sorted library will probably change to depend solely on play-ws-s
 
 [sttp]: https://github.com/softwaremill/sttp
 [playws]: https://github.com/playframework/play-ws
+[legacy-play-ws]: https://github.com/ragb/sttp-play-ws
 
