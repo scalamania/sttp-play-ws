@@ -24,6 +24,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 import scala.util.control.NoStackTrace
 
+// Remove this once following issue solved: https://github.com/softwaremill/sttp/issues/1376
 // Source:
 // https://github.com/softwaremill/sttp/blob/master/testing/server/src/main/scala/sttp/client3/testing/server/HttpServer.scala
 class HttpServer(port: Int, info: String => Unit) extends AutoCloseable with CorsDirectives {
