@@ -1,5 +1,7 @@
 ## sttp-play-ws ##
 
+[![Build Status](https://travis-ci.org/scalamania/sttp-play-ws.svg?branch=master)](https://travis-ci.org/scalamania/sttp-play-ws)
+
 [sttp][sttp] backend for [play-ws][playws].
 
 ### Goals ###
