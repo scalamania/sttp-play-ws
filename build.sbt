@@ -32,7 +32,7 @@ val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
     sonatypeCredentialHost := "s01.oss.sonatype.org",
     developers := List(
       Developer(
-        id = "scalamania",
+        id = "veysiertekin",
         name = "scalamania",
         email = "info@test.com",
         url = new URL("https://github.com/scalamania/sttp-play-ws")
