@@ -16,11 +16,7 @@ lazy val root: Project = (project in file("."))
   .settings(
     publishArtifact := false,
     publishLocal := {},
-    publish := {},
-    publishTo := sonatypePublishToBundle.value,
-    publishMavenStyle := true,
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
-    sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+    publish := {}
   )
   .aggregate(
     play28Project
@@ -32,7 +28,8 @@ val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
     scalaVersion := "2.12.11",
     organizationName := "scalamania",
     licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
-    homepage := Some(url("https://github.com/scalamania/sttp-play-ws"))
+    homepage := Some(url("https://github.com/scalamania/sttp-play-ws")),
+    sonatypeCredentialHost := "s01.oss.sonatype.org"
   )
 ) ++ Seq(
   scalaSource in Compile := (LocalProject("root") / baseDirectory).value / "common" / "src" / "main" / "scala",
