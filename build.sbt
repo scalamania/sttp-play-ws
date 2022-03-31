@@ -29,7 +29,15 @@ val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
     organizationName := "scalamania",
     licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
     homepage := Some(url("https://github.com/scalamania/sttp-play-ws")),
-    sonatypeCredentialHost := "s01.oss.sonatype.org"
+    sonatypeCredentialHost := "s01.oss.sonatype.org",
+    developers := List(
+      Developer(
+        id = "scalamania",
+        name = "scalamania",
+        email = "info@test.com",
+        url = new URL("https://github.com/scalamania/sttp-play-ws")
+      )
+    )
   )
 ) ++ Seq(
   scalaSource in Compile := (LocalProject("root") / baseDirectory).value / "common" / "src" / "main" / "scala",
