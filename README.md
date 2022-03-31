@@ -19,7 +19,7 @@ Include the following on your build.sbt or similar:
 libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "<latest>"
 ```
 
-This library is published for both play 2.3, and scala 2.12 and 2.13.
+This library is published for play 2.8, and scala 2.12 & 2.13.
 Check the following table for artifact names, versions and associated play versions you might use for the artifact name.
 
 
