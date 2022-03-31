@@ -16,15 +16,12 @@ Include the following on your build.sbt or similar:
  
 
 ```scala
-libraryDependencies += "io.github.scalamania" %% "sttp-play-ws-<playVersion>" % "<latest>"
+libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "<latest>"
 ```
 
 This library is published for both play 2.3, and scala 2.12 and 2.13.
 Check the following table for artifact names, versions and associated play versions you might use for the artifact name.
 
-| Artifact Name   | Play Version |
-|-----------------|--------------|
-| sttp-play-ws-28 | 2.8.14       |
 
 ### Features ###
 
