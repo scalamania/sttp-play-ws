@@ -1,4 +1,4 @@
-package com.ruiandrebatista.sttp.play
+package io.github.scalamania.sttp.play
 
 import akka.actor.ActorSystem
 import scala.concurrent.duration._

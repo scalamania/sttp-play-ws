@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ruiandrebatista.sttp.play
+package io.github.scalamania.sttp.play
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.{FileIO, Sink, Source, StreamConverters}
