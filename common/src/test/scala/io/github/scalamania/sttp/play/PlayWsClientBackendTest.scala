@@ -13,11 +13,8 @@ class PlayWsClientBackendTest extends HttpTest[Future] {
 
   val server = new HttpServer(51823, println(_))
 
-  override implicit val backend: SttpBackend[Future, Any] =
-    PlayWSClientBackend(SttpBackendOptions.Default)
-
-  override implicit val convertToFuture: ConvertToFuture[Future] =
-    ConvertToFuture.future
+  override implicit val backend: SttpBackend[Future, Any] = PlayWSClientBackend(SttpBackendOptions.Default)
+  override implicit val convertToFuture: ConvertToFuture[Future] = ConvertToFuture.future
 
   override def timeoutToNone[T](t: Future[T], timeoutMillis: Int): Future[Option[T]] = t.map(Some(_))
 

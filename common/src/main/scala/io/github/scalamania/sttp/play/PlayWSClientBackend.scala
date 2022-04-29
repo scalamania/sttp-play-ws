@@ -34,10 +34,9 @@ final class PlayWSClientBackend private (
     wsClient: WSClient,
     mustCloseClient: Boolean,
     backendOptions: SttpBackendOptions
-)(implicit
-    ec: ExecutionContext,
-    mat: Materializer
-) extends SttpBackend[Future, Source[ByteString, Any]] {
+)(implicit mat: Materializer)
+    extends SttpBackend[Future, Source[ByteString, Any]] {
+  implicit val ec: ExecutionContext = mat.executionContext
 
   private val maybeProxyServer = backendOptions.proxy.map { sttpProxy =>
     DefaultWSProxyServer(sttpProxy.host, sttpProxy.port, if (sttpProxy.port == 443) Some("https") else None)
@@ -225,15 +224,15 @@ final class PlayWSClientBackend private (
 }
 
 object PlayWSClientBackend {
-  private def defaultClient(implicit mat: Materializer) =
-    AhcWSClient()
-  def apply(backendOptions: SttpBackendOptions)(implicit ec: ExecutionContext, mat: Materializer) =
+  def apply(backendOptions: SttpBackendOptions)(implicit mat: Materializer) =
     new FollowRedirectsBackend[Future, Source[ByteString, Any]](
       new PlayWSClientBackend(defaultClient, true, backendOptions)
     )
 
-  def apply(client: WSClient, backendOptions: SttpBackendOptions)(implicit ec: ExecutionContext, mat: Materializer) =
+  def apply(client: WSClient, backendOptions: SttpBackendOptions)(implicit mat: Materializer) =
     new FollowRedirectsBackend[Future, Source[ByteString, Any]](
       new PlayWSClientBackend(client, false, backendOptions)
     )
+
+  private def defaultClient(implicit mat: Materializer) = AhcWSClient()
 }
