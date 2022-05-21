@@ -21,7 +21,6 @@ import akka.stream.scaladsl.{FileIO, Sink, Source, StreamConverters}
 import akka.util.ByteString
 import java.io.File
 import play.api.libs.ws._
-import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.MultipartFormData
 import play.core.formatters.{Multipart => PlayMultipart}
 import scala.concurrent.{ExecutionContext, Future}
@@ -225,11 +224,6 @@ final class PlayWSClientBackend private (
 
 object PlayWSClientBackend {
   def apply(
-      backendOptions: SttpBackendOptions = SttpBackendOptions.Default
-  )(implicit mat: Materializer) =
-    apply(defaultClient, backendOptions, closeClient = true)
-
-  def apply(
       client: WSClient,
       backendOptions: SttpBackendOptions = SttpBackendOptions.Default,
       closeClient: Boolean = false
@@ -237,6 +231,4 @@ object PlayWSClientBackend {
     new FollowRedirectsBackend[Future, Source[ByteString, Any]](
       new PlayWSClientBackend(client, backendOptions, closeClient)
     )
-
-  private def defaultClient(implicit mat: Materializer) = AhcWSClient()
 }
