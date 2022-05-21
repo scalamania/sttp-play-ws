@@ -16,7 +16,7 @@ Include the following on your build.sbt or similar:
  
 
 ```scala
-libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "<latest>"
+libraryDependencies += "io.github.scalamania" %% "sttp-play-ws" % "0.2.3"
 ```
 
 This library is published using play 2.8 as a `Provided` dependency, which means that does not include play itself and allows upgrades on non-broken changes.
