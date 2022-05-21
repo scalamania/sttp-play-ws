@@ -12,16 +12,6 @@ val defaultCompilerOptions = Seq(
   "-Xlint:unused"
 )
 
-lazy val root: Project = (project in file("."))
-  .settings(
-    publishArtifact := false,
-    publishLocal := {},
-    publish := {}
-  )
-  .aggregate(
-    play28Project
-  )
-
 val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
   List(
     organization := "io.github.scalamania",
@@ -40,31 +30,34 @@ val commonSettings: Seq[Def.Setting[_]] = inThisBuild(
     )
   )
 ) ++ Seq(
-  scalaSource in Compile := (LocalProject("root") / baseDirectory).value / "common" / "src" / "main" / "scala",
-  scalaSource in Test := (LocalProject("root") / baseDirectory).value / "common" / "src" / "test" / "scala",
-  unmanagedResourceDirectories in Test ++= Seq(
+  Compile / scalaSource := (LocalProject("root") / baseDirectory).value / "common" / "src" / "main" / "scala",
+  Test / scalaSource := (LocalProject("root") / baseDirectory).value / "common" / "src" / "test" / "scala",
+  Test / unmanagedResourceDirectories ++= Seq(
     (LocalProject("root") / baseDirectory).value / "common" / "src" / "test" / "resources"
   ),
-  fork in Test := true,
+  Test / fork := true,
   libraryDependencies ++= Seq(
-    "com.softwaremill.sttp.client3" %% "core" % "3.5.1",
-    ("com.softwaremill.sttp.client3" %% "core" % "3.5.1" classifier "tests") % Test,
-    "org.scalatest" %% "scalatest" % "3.2.11" % Test,
+    "com.softwaremill.sttp.client3" %% "core" % "3.6.2" % Provided,
+    ("com.softwaremill.sttp.client3" %% "core" % "3.6.2" classifier "tests") % Test,
+    "org.scalatest" %% "scalatest" % "3.2.12" % Test,
     "com.typesafe.akka" %% "akka-http" % "10.2.9" % Test,
     "com.typesafe.akka" %% "akka-stream" % "2.6.19" % Test,
     "ch.megard" %% "akka-http-cors" % "1.1.3" % Test,
-    "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
+    "ch.qos.logback" % "logback-classic" % "1.2.11" % Test
   )
 )
 
-lazy val play28Project = Project("play28", file("play28"))
+lazy val root: Project = (project in file("."))
   .settings(commonSettings)
   .settings(
     name := "sttp-play-ws",
     crossScalaVersions := Seq("2.12.15", "2.13.8"),
     libraryDependencies ++= Seq(
-      "com.typesafe.play" %% "play-ws" % "2.8.14" % Provided,
-      "com.typesafe.play" %% "play-ahc-ws" % "2.8.14" % Provided
+      "com.typesafe.play" %% "play-ws" % "2.8.15" % Provided,
+      "com.typesafe.play" %% "play-ahc-ws" % "2.8.15" % Provided
     ),
-    scalacOptions := defaultCompilerOptions
+    scalacOptions := defaultCompilerOptions,
+    publishArtifact := false,
+    publishLocal := {},
+    publish := {}
   )
