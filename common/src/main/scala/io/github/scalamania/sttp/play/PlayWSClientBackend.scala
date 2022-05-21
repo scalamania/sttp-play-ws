@@ -32,8 +32,8 @@ import sttp.monad.{FutureMonad, MonadError}
 
 final class PlayWSClientBackend private (
     wsClient: WSClient,
-    mustCloseClient: Boolean,
-    backendOptions: SttpBackendOptions
+    backendOptions: SttpBackendOptions,
+    closeClient: Boolean
 )(implicit mat: Materializer)
     extends SttpBackend[Future, Source[ByteString, Any]] {
   implicit val ec: ExecutionContext = mat.executionContext
@@ -192,7 +192,7 @@ final class PlayWSClientBackend private (
     }
 
   def close(): Future[Unit] =
-    if (mustCloseClient) Future(wsClient.close())
+    if (closeClient) Future(wsClient.close())
     else Future.successful(())
 
   private def saveFile(file: File, response: StandaloneWSResponse) = {
@@ -224,14 +224,18 @@ final class PlayWSClientBackend private (
 }
 
 object PlayWSClientBackend {
-  def apply(backendOptions: SttpBackendOptions)(implicit mat: Materializer) =
-    new FollowRedirectsBackend[Future, Source[ByteString, Any]](
-      new PlayWSClientBackend(defaultClient, true, backendOptions)
-    )
+  def apply(
+      backendOptions: SttpBackendOptions = SttpBackendOptions.Default
+  )(implicit mat: Materializer) =
+    apply(defaultClient, backendOptions, closeClient = true)
 
-  def apply(client: WSClient, backendOptions: SttpBackendOptions)(implicit mat: Materializer) =
+  def apply(
+      client: WSClient,
+      backendOptions: SttpBackendOptions = SttpBackendOptions.Default,
+      closeClient: Boolean = false
+  )(implicit mat: Materializer) =
     new FollowRedirectsBackend[Future, Source[ByteString, Any]](
-      new PlayWSClientBackend(client, false, backendOptions)
+      new PlayWSClientBackend(client, backendOptions, closeClient)
     )
 
   private def defaultClient(implicit mat: Materializer) = AhcWSClient()
